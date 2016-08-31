@@ -243,6 +243,21 @@ static inline void sort6_rank_order_reuse(int *d) {
     d[o0]=x0; d[o1]=x1; d[o2]=x2; d[o3]=x3; d[o4]=x4; d[o5]=x5;
 }
 
+static inline void sort6_rank_order_loop(int *d) {
+	int e[6];
+	int p[6];
+	p[0] = 0; p[1] = 1; p[2] = 2; p[3] = 3; p[4] = 4; p[5] = 5;
+	int o5 = 15;
+	for (int i = 0; i < 5; i++) {
+		int o = 0;
+		for (int j=0;j<6;j++) o += d[i] > d[j];
+		o5 -= p[o];
+		e[p[o]++] = d[i];
+	}
+	e[o5] = d[5];
+	for (int i=0; i<6; i++) d[i] = e[i];
+}
+
 static inline void sort6_inlined_bubble(int * d){
 #define SWAP(x,y) { int dx = d[x], dy = d[y], tmp; tmp = d[x] = dx < dy ? dx : dy; d[y] ^= dx ^ tmp; }
     SWAP(0,1); SWAP(1,2); SWAP(2,3); SWAP(3,4); SWAP(4,5);
@@ -393,6 +408,7 @@ TEST(insertion_sort_unrolled, "Insertion Sort Unrolled                   ");
 TEST(rank_order,              "Rank Order                                ");
 TEST(rank_order_reg,          "Rank Order with registers                 ");
 TEST(rank_order_reuse,        "Rank Order with reuse                     ");
+TEST(rank_order_loop,         "Rank Order in loop                        ");
 TEST(sorting_network_v1,      "Sorting Networks (Daniel Stutzbach)       ");
 TEST(sorting_network_v2,      "Sorting Networks (Paul R)                 ");
 TEST(sorting_network_v3,      "Sorting Networks 12 with Fast Swap        ");
