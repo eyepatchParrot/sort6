@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <immintrin.h>
+#include <limits.h>
+#include <stdint.h>
  
 static inline int cmp(const void *p1, const void *p2)
 {
@@ -66,6 +69,33 @@ static inline void sort6_insertion_sort_unrolled(int *d){
     for (j5 = 5; j5 >= 1 && tmp5 < d[j5-1]; j5--)
         d[j5] = d[j5-1];
     d[j5] = tmp5;
+}
+
+static inline void sort6_insertion_sort_avx(int* d) {
+	__m256i src = _mm256_setr_epi32(d[0], d[1], d[2], d[3], d[4], d[5], 0, 0);
+	__m256i index = _mm256_setr_epi32(0, 1, 2, 3, 4, 5, 6, 7);
+	__m256i shlpermute = _mm256_setr_epi32(7, 0, 1, 2, 3, 4, 5, 6);
+	__m256i sorted = _mm256_setr_epi32(d[0], INT_MAX, INT_MAX, INT_MAX,
+			INT_MAX, INT_MAX, INT_MAX, INT_MAX);
+	__m256i val, gt, permute;
+	unsigned j;
+	 // 8 / 32 = 2^-2
+#define ITER(I) \
+		val = _mm256_permutevar8x32_epi32(src, _mm256_set1_epi32(I));\
+		gt =  _mm256_cmpgt_epi32(sorted, val);\
+		permute =  _mm256_blendv_epi8(index, shlpermute, gt);\
+		j = ffs( _mm256_movemask_epi8(gt)) >> 2;\
+		sorted = _mm256_blendv_epi8(_mm256_permutevar8x32_epi32(sorted, permute),\
+				val, _mm256_cmpeq_epi32(index, _mm256_set1_epi32(j)))
+	ITER(1);
+	ITER(2);
+	ITER(3);
+	ITER(4);
+	ITER(5);
+	int x[8];
+	_mm256_storeu_si256((__m256i*)x, sorted);
+	d[0] = x[0]; d[1] = x[1]; d[2] = x[2]; d[3] = x[3]; d[4] = x[4]; d[5] = x[5];
+#undef ITER
 }
 
 static inline void sort6_sorting_network_v1(int * d){
@@ -415,6 +445,7 @@ TEST(libqsort,                "Direct call to qsort library function     ");
 TEST(insertion_sort_v1,       "Naive implementation (insertion sort)     ");
 TEST(insertion_sort_v2,       "Insertion Sort (Daniel Stutzbach)         ");
 TEST(insertion_sort_unrolled, "Insertion Sort Unrolled                   ");
+TEST(insertion_sort_avx,      "Insertion Sort by AVX                     ");
 TEST(rank_order,              "Rank Order                                ");
 TEST(rank_order_reg,          "Rank Order with registers                 ");
 TEST(rank_order_reuse,        "Rank Order with reuse                     ");
