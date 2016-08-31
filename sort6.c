@@ -215,6 +215,34 @@ static inline void sort6_rank_order_reg(int *d) {
     d[o0]=x0; d[o1]=x1; d[o2]=x2; d[o3]=x3; d[o4]=x4; d[o5]=x5;
 }
 
+static inline void sort6_rank_order_reuse(int *d) {
+    register int x0,x1,x2,x3,x4,x5;
+    x0 = d[0];
+    x1 = d[1];
+    x2 = d[2];
+    x3 = d[3];
+    x4 = d[4];
+    x5 = d[5];
+    int o0, o1, o2, o3, o4, o5;
+    o0 = o1 = o2 = o3 = o4 = o5 = 0;
+    int ci1, ci2, ci3, ci4;
+    ci1 = x1 >= x0; ci2 = x2 >= x0; ci3 = x3 >= x0; ci4 = x4 >= x0;
+    o0 += (1-ci1) + (1-ci2) + (1-ci3) + (1-ci4) + (x0 > x5);
+    o1 += ci1; o2 += ci2; o3 += ci3; o4 += ci4;
+    ci2 = x2 >= x1; ci3 = x3 >= x1; ci4 = x4 >= x1;
+    o1 += (1-ci2) + (1-ci3) + (1-ci4) + (x1>x5);
+    o2 += ci2; o3 += ci3; o4 += ci4;
+    ci3 = x3 >= x2; ci4 = x4 >= x2;
+    o2 += (1-ci3) + (1-ci4) + (x2>x5);
+    o3 += ci3; o4 += ci4;
+    ci4 = x4 >= x3;
+    o3 += (1-ci4) + (x3>x5);
+    o4 += ci4;
+    o4 += (x4>x5);
+    o5 = 15-o0-o1-o2-o3-o4;
+    d[o0]=x0; d[o1]=x1; d[o2]=x2; d[o3]=x3; d[o4]=x4; d[o5]=x5;
+}
+
 static inline void sort6_inlined_bubble(int * d){
 #define SWAP(x,y) { int dx = d[x], dy = d[y], tmp; tmp = d[x] = dx < dy ? dx : dy; d[y] ^= dx ^ tmp; }
     SWAP(0,1); SWAP(1,2); SWAP(2,3); SWAP(3,4); SWAP(4,5);
@@ -364,11 +392,12 @@ TEST(insertion_sort_v2,       "Insertion Sort (Daniel Stutzbach)         ");
 TEST(insertion_sort_unrolled, "Insertion Sort Unrolled                   ");
 TEST(rank_order,              "Rank Order                                ");
 TEST(rank_order_reg,          "Rank Order with registers                 ");
+TEST(rank_order_reuse,        "Rank Order with reuse                     ");
 TEST(sorting_network_v1,      "Sorting Networks (Daniel Stutzbach)       ");
 TEST(sorting_network_v2,      "Sorting Networks (Paul R)                 ");
 TEST(sorting_network_v3,      "Sorting Networks 12 with Fast Swap        ");
 TEST(sorting_network_v4,      "Sorting Networks 12 reordered Swap        ");
-TEST(sorting_net_simple_swap, "Sorting Networks 12 reordered Simple Swap (");
+TEST(sorting_net_simple_swap, "Sorting Networks 12 reordered Simple Swap ");
 TEST(fast_network,            "Reordered Sorting Network w/ fast swap    ");
 TEST(fast_network_simplified, "Reordered Sorting Network w/ fast swap V2 ");
 TEST(inlined_bubble,          "Inlined Bubble Sort (Paolo Bonzini)       ");
