@@ -366,7 +366,13 @@ void ran_fill(int n, int *a) {
     static int seed = 76521;
     while (n--) *a++ = (seed = seed *1812433253 + 12345);
 }
- 
+
+int order6(int *d) {
+#define ORDER_PAIR(I) (d[I] <= d[I+1])
+    return ORDER_PAIR(0) && ORDER_PAIR(1) && ORDER_PAIR(2) && ORDER_PAIR(3) &&
+        ORDER_PAIR(4);
+#undef ORDER_PAIR
+}
  
 #define NTESTS 16384
 int main(){
@@ -384,17 +390,21 @@ int main(){
     {\
     int passed = 1;\
     for (i = 0; i < 6*NTESTS ; i+=6) { \
-        if (d[i+0] > d[i+1] \
-            || d[i+1] > d[i+2] \
-            || d[i+2] > d[i+3] \
-            || d[i+3] > d[i+4] \
-            || d[i+4] > d[i+5]) {\
+        if (!order6(d + i)) { \
             printf("d%d : %d %d %d %d %d %d\n", i, \
                     d[i+0], d[i+1], d[i+2], \
                     d[i+3], d[i+4], d[i+5]); \
             passed = 0;\
         }\
     } \
+    int eq[] = { 5, 1, 2, 4, 5, 0 };\
+    sort6_##variant(eq);\
+    if (!order6(eq)) {\
+        printf("eq : %d %d %d %d %d %d\n",\
+                eq[0], eq[1], eq[2], \
+                eq[3], eq[4], eq[5]); \
+        passed = 0;\
+    }\
     if (!passed) {\
             printf(" FAILED\n");\
     }\
