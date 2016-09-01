@@ -288,6 +288,37 @@ static inline void sort6_rank_order_loop(int *d) {
 	for (int i=0; i<6; i++) d[i] = e[i];
 }
 
+static inline void sort6_rank_order_avx(int* d) {
+	__m256i ror = _mm256_setr_epi32(5, 0, 1, 2, 3, 4, 6, 7);
+	__m256i one = _mm256_set1_epi32(1);
+	__m256i src = _mm256_setr_epi32(d[0], d[1], d[2], d[3], d[4], d[5], INT_MAX, INT_MAX);
+	__m256i rot = src;
+    __m256i index = _mm256_setzero_si256();
+	__m256i gt, permute;
+    __m256i shl = _mm256_setr_epi32(1, 2, 3, 4, 5, 6, 6, 6);
+    __m256i dstIx = _mm256_setr_epi32(0,1,2,3,4,5,6,7);
+	__m256i srcIx = dstIx;
+    __m256i eq = src;
+    __m256i rotIx = _mm256_setzero_si256();
+#define INC(I)\
+	rot = _mm256_permutevar8x32_epi32(rot, ror);\
+	gt = _mm256_cmpgt_epi32(src, rot);\
+	index = _mm256_add_epi32(index, _mm256_and_si256(gt, one));\
+    eq = _mm256_permutevar8x32_epi32(eq, shl);\
+    index = _mm256_add_epi32(index, _mm256_and_si256(\
+                _mm256_cmpeq_epi32(src, eq), one))
+	INC(0);
+	INC(1);
+	INC(2);
+	INC(3);
+	INC(4);
+    int e[6];
+    e[0] = d[0]; e[1] = d[1]; e[2] = d[2]; e[3] = d[3]; e[4] = d[4]; e[5] = d[5];
+    int i[8];
+    _mm256_storeu_si256((__m256i*)i, index);
+    d[i[0]] = e[0]; d[i[1]] = e[1]; d[i[2]] = e[2]; d[i[3]] = e[3]; d[i[4]] = e[4]; d[i[5]] = e[5];
+}
+
 static inline void sort6_inlined_bubble(int * d){
 #define SWAP(x,y) { int dx = d[x], dy = d[y], tmp; tmp = d[x] = dx < dy ? dx : dy; d[y] ^= dx ^ tmp; }
     SWAP(0,1); SWAP(1,2); SWAP(2,3); SWAP(3,4); SWAP(4,5);
@@ -397,10 +428,26 @@ void ran_fill(int n, int *a) {
     while (n--) *a++ = (seed = seed *1812433253 + 12345);
 }
 
-int order6(int *d) {
+int order6(int *d, int* check) {
 #define ORDER_PAIR(I) (d[I] <= d[I+1])
-    return ORDER_PAIR(0) && ORDER_PAIR(1) && ORDER_PAIR(2) && ORDER_PAIR(3) &&
+    int order = ORDER_PAIR(0) && ORDER_PAIR(1) && ORDER_PAIR(2) && ORDER_PAIR(3) &&
         ORDER_PAIR(4);
+    int bijective = 1;
+    // all([x in d for x in check])
+    // all([x in check for x in d])
+    for (int i = 0; bijective && i < 6; i++) {
+        int present = 0;
+        for (int j = 0; !present && j < 6; j++)
+            present = d[j] == check[i] ? 1 : 0;
+        bijective = !present ? 0 : 1;
+    }
+    for (int i = 0; bijective && i < 6; i++) {
+        int extras = 1;
+        for (int j = 0; extras && j < 6; j++)
+            extras = d[i] == check[j] ? 0 : 1;
+        bijective = extras ? 0 : 1;
+    }
+    return bijective && order;
 #undef ORDER_PAIR
 }
  
@@ -409,8 +456,10 @@ int main(){
 #define TEST(variant, description) {\
     int i;\
     int d[6*NTESTS];\
+    int check[6*NTESTS];\
     sort6_##variant(d);\
     ran_fill(6*NTESTS, d);\
+    memcpy(check, d, sizeof(int) * 6 * NTESTS);\
     unsigned long long cycles = rdtsc();\
     for (i = 0; i < 6*NTESTS ; i+=6){\
         sort6_##variant(d+i);\
@@ -420,7 +469,7 @@ int main(){
     {\
     int passed = 1;\
     for (i = 0; i < 6*NTESTS ; i+=6) { \
-        if (!order6(d + i)) { \
+        if (!order6(d + i, check + i)) { \
             printf("d%d : %d %d %d %d %d %d\n", i, \
                     d[i+0], d[i+1], d[i+2], \
                     d[i+3], d[i+4], d[i+5]); \
@@ -428,8 +477,9 @@ int main(){
         }\
     } \
     int eq[] = { 5, 1, 2, 4, 5, 0 };\
+    int check2[] = { 5, 1, 2, 4, 5, 0 };\
     sort6_##variant(eq);\
-    if (!order6(eq)) {\
+    if (!order6(eq, check2)) {\
         printf("eq : %d %d %d %d %d %d\n",\
                 eq[0], eq[1], eq[2], \
                 eq[3], eq[4], eq[5]); \
@@ -450,6 +500,7 @@ TEST(rank_order,              "Rank Order                                ");
 TEST(rank_order_reg,          "Rank Order with registers                 ");
 TEST(rank_order_reuse,        "Rank Order with reuse                     ");
 TEST(rank_order_loop,         "Rank Order in loop                        ");
+TEST(rank_order_avx,          "Rank Order with avx                       ");
 TEST(sorting_network_v1,      "Sorting Networks (Daniel Stutzbach)       ");
 TEST(sorting_network_v2,      "Sorting Networks (Paul R)                 ");
 TEST(sorting_network_v3,      "Sorting Networks 12 with Fast Swap        ");

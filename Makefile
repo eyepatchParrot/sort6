@@ -15,6 +15,9 @@ $(TARGET): $(SOURCE)
 prof: $(SOURCE)
 	gcc $(CFLAGS) $(PFLAGS) $< -o $(PROF_TARGET)
 
+obj: $(SOURCE)
+	gcc -c $(CFLAGS) $(PFLAGS) $<
+
 clean:
 	rm -f $(TARGET)
 
