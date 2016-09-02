@@ -298,15 +298,15 @@ static inline void sort6_rank_order_avx(int* d) {
     __m256i shl = _mm256_setr_epi32(1, 2, 3, 4, 5, 6, 6, 6);
     __m256i dstIx = _mm256_setr_epi32(0,1,2,3,4,5,6,7);
 	__m256i srcIx = dstIx;
-    __m256i eq = src;
+    __m256i eq = one;
     __m256i rotIx = _mm256_setzero_si256();
 #define INC(I)\
 	rot = _mm256_permutevar8x32_epi32(rot, ror);\
 	gt = _mm256_cmpgt_epi32(src, rot);\
 	index = _mm256_add_epi32(index, _mm256_and_si256(gt, one));\
-    eq = _mm256_permutevar8x32_epi32(eq, shl);\
-    index = _mm256_add_epi32(index, _mm256_and_si256(\
-                _mm256_cmpeq_epi32(src, eq), one))
+    index = _mm256_add_epi32(index, _mm256_and_si256(eq,\
+                _mm256_cmpeq_epi32(src, rot)));\
+    eq = _mm256_insert_epi32(eq, 0, I)
 	INC(0);
 	INC(1);
 	INC(2);
