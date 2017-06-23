@@ -294,12 +294,13 @@ static inline void sort6_rank_order_avx(int* d) {
 	__m256i src = _mm256_setr_epi32(d[0], d[1], d[2], d[3], d[4], d[5], INT_MAX, INT_MAX);
 	__m256i rot = src;
     __m256i index = _mm256_setzero_si256();
-	__m256i gt, permute;
-    __m256i shl = _mm256_setr_epi32(1, 2, 3, 4, 5, 6, 6, 6);
-    __m256i dstIx = _mm256_setr_epi32(0,1,2,3,4,5,6,7);
-	__m256i srcIx = dstIx;
+	__m256i gt;
+  //, permute;
+    //__m256i shl = _mm256_setr_epi32(1, 2, 3, 4, 5, 6, 6, 6);
+    //__m256i dstIx = _mm256_setr_epi32(0,1,2,3,4,5,6,7);
+	//__m256i srcIx = dstIx;
     __m256i eq = one;
-    __m256i rotIx = _mm256_setzero_si256();
+//    __m256i rotIx = _mm256_setzero_si256();
 #define INC(I)\
 	rot = _mm256_permutevar8x32_epi32(rot, ror);\
 	gt = _mm256_cmpgt_epi32(src, rot);\
@@ -416,6 +417,81 @@ static inline void sort6_fast_network_simplified(int * d) {
 #undef max
 }
 
+static inline void sort6_net_6(int * u) {
+#define S(a,b,c,d,e,f) u[0] = a; u[1] = b; u[2] = c; u[3] = d; u[4] = e; u[5] = f;
+#define Scd11(a,b,c,d,e,f) if (c<d) { S(a,b,c,d,e,f) } else { S(a,b,d,c,e,f) }
+#define Sde10(a,b,c,d,e,f) if (d<e) { Scd11(a,b,c,d,e,f) } else { Scd11(a,b,c,e,d,f) }
+#define Sbc9(a,b,c,d,e,f) if (b<c) { Sde10(a,b,c,d,e,f) } else { Sde10(a,c,b,d,e,f) }
+#define Sef8(a,b,c,d,e,f) if (e<f) { Sbc9(a,b,c,d,e,f) } else { Sbc9(a,b,c,d,f,e) }
+#define Scd7(a,b,c,d,e,f) if (c<d) { Sef8(a,b,c,d,e,f) } else { Sef8(a,b,d,c,e,f) }
+#define Sab6(a,b,c,d,e,f) if (a<b) { Scd7(a,b,c,d,e,f) } else { Scd7(b,a,c,d,e,f) }
+#define Sdf5(a,b,c,d,e,f) if (d<f) { Sab6(a,b,c,d,e,f) } else { Sab6(a,b,c,f,e,d) }
+#define Sbe4(a,b,c,d,e,f) if (b<e) { Sdf5(a,b,c,d,e,f) } else { Sdf5(a,e,c,d,b,f) }
+#define Sac3(a,b,c,d,e,f) if (a<c) { Sbe4(a,b,c,d,e,f) } else { Sbe4(c,b,a,d,e,f) }
+#define Sef2(a,b,c,d,e,f) if (e<f) { Sac3(a,b,c,d,e,f) } else { Sac3(a,b,c,d,f,e) }
+#define Scd1(a,b,c,d,e,f) if (c<d) { Sef2(a,b,c,d,e,f) } else { Sef2(a,b,d,c,e,f) }
+#define Sab0(a,b,c,d,e,f) if (a<b) { Scd1(a,b,c,d,e,f) } else { Scd1(b,a,c,d,e,f) }
+  const int x=u[0],y=u[1],z=u[2],w=u[3],v=u[4],t=u[5];
+  Sab0(x,y,z,w,v,t)
+#undef Sab0
+#undef Scd1
+#undef Sef2
+#undef Sac3
+#undef Sbe4
+#undef Sdf5
+#undef Sab6
+#undef Scd7
+#undef Sef8
+#undef Sbc9
+#undef Sde10
+#undef Scd11
+#undef S
+}
+void net_3(int * u) {
+  //assert(a.size() == 3);
+  //assert(v.size() == 3);
+#define S(a,b,c) u[0] = a; u[1] = b; u[2] = c;
+#define Sbc(a,b,c) if (b<c) { S(a,b,c) } else { S(a,c,b) }
+#define Sac(a,b,c) if (a<c) { Sbc(a,b,c) } else { Sbc(c,b,a) }
+#define Sab(a,b,c) if (a<b) { Sac(a,b,c) } else { Sac(b,a,c) }
+  int x=u[0],y=u[1],z=u[2];
+  Sab(x,y,z)
+#undef S
+#undef Sbc
+#undef Sac
+#undef Sab
+}
+
+void sort6_mer_6(int * u) {
+  net_3(u);
+  net_3(u+3);
+#define S(a,b,c,d,e,f) u[0] = a; u[1] = b; u[2] = c; u[3] = d; u[4] = e; u[5] = f;
+
+#define deab_cf(a,b,c,d,e,f) if (c<f) { S(d,e,a,b,c,f) } else { S(d,e,a,b,f,c) }
+#define dea_bf(a,b,c,d,e,f) if (b<f) { deab_cf(a,b,c,d,e,f) } else { S(d,e,a,f,b,c) }
+#define de_af(a,b,c,d,e,f) if (a<f) { dea_bf(a,b,c,d,e,f) } else { S(d,e,f,a,b,c) }
+#define daeb_cf(a,b,c,d,e,f) if (c<f) { S(d,a,e,b,c,f) } else { S(d,a,e,b,f,c) }
+#define dae_bf(a,b,c,d,e,f) if (b<f) { daeb_cf(a,b,c,d,e,f) } else { S(d,a,e,f,b,c) }
+#define dabe_cf(a,b,c,d,e,f) if (c<f) { S(d,a,b,e,c,f) } else { S(d,a,b,e,f,c) }
+#define dab_ce(a,b,c,d,e,f) if (c<e) { S(d,a,b,c,e,f) } else { dabe_cf(a,b,c,d,e,f) }
+#define da_be(a,b,c,d,e,f) if (b<e) { dab_ce(a,b,c,d,e,f) } else { dae_bf(a,b,c,d,e,f) }
+#define d_ae(a,b,c,d,e,f) if (a<e) { da_be(a,b,c,d,e,f) } else { de_af(a,b,c,d,e,f) }
+
+#define adeb_cf(a,b,c,d,e,f) if (c<f) { S(a,d,e,b,c,f) } else { S(a,d,e,b,f,c) }
+#define ade_bf(a,b,c,d,e,f) if (b<f) { adeb_cf(a,b,c,d,e,f) } else { S(a,d,e,f,b,c) }
+#define adbe_cf(a,b,c,d,e,f) if (c<f) { S(a,d,b,e,c,f) } else { S(a,d,b,e,f,c) }
+#define adb_ce(a,b,c,d,e,f) if (c<e) { S(a,d,b,c,e,f) } else { adbe_cf(a,b,c,d,e,f) }
+#define ad_be(a,b,c,d,e,f) if (b<e) { adb_ce(a,b,c,d,e,f) } else { ade_bf(a,b,c,d,e,f) }
+#define abde_cf(a,b,c,d,e,f) if (c<f) { S(a,b,d,e,c,f) } else { S(a,b,d,e,f,c) }
+#define abd_ce(a,b,c,d,e,f) if (c<e) { S(a,b,d,c,e,f) } else { abde_cf(a,b,c,d,e,f) }
+#define ab_cd(a,b,c,d,e,f) if (c<d) { S(a,b,c,d,e,f) } else { abd_ce(a,b,c,d,e,f) }
+#define a_bd(a,b,c,d,e,f) if (b<d) { ab_cd(a,b,c,d,e,f) } else { ad_be(a,b,c,d,e,f) }
+#define ad(a,b,c,d,e,f) if (a<d) { a_bd(a,b,c,d,e,f) } else { d_ae(a,b,c,d,e,f) }
+  int64_t x=u[0],y=u[1],z=u[2],w=u[3],q=u[4],t=u[5];
+  ad(x,y,z,w,q,t)
+}
+ 
+
 static inline unsigned long long rdtsc(void)
 {
     unsigned long long int x;
@@ -510,6 +586,8 @@ TEST(fast_network,            "Reordered Sorting Network w/ fast swap    ");
 TEST(fast_network_simplified, "Reordered Sorting Network w/ fast swap V2 ");
 TEST(inlined_bubble,          "Inlined Bubble Sort (Paolo Bonzini)       ");
 TEST(insertion_sort_unrolled_v2, "Unrolled Insertion Sort (Paolo Bonzini)   ");
+TEST(net_6, "Unrolled sort network");
+TEST(mer_6, "unrolled merge");
  
 return 0;
  
