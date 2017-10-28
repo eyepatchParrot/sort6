@@ -13,7 +13,10 @@ $(TARGET): $(SOURCE)
 	gcc $(CFLAGS) $(DFLAGS) $< -o ./$@
 
 prof: $(SOURCE)
-	gcc $(CFLAGS) $(PFLAGS) $< -o $(PROF_TARGET)
+	gcc $(CFLAGS) $(PFLAGS) -fprofile-generate $< -o $(PROF_TARGET)
+	./$(PROF_TARGET)
+	gcc $(CFLAGS) $(PFLAGS) -fprofile-use $< -o $(PROF_TARGET)
+	./$(PROF_TARGET)
 
 obj: $(SOURCE)
 	gcc -c $(CFLAGS) $(PFLAGS) $<

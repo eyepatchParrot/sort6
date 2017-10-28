@@ -43,6 +43,39 @@ static inline void sort6_insertion_sort_v2(int *d){
     }
 }
  
+static inline void sort6_insert_var(int* v) {
+  typedef int V;
+#define C(A,B) if (B<A) {V t = A;A=B;B=t;} else { break; }
+  V a = v[0], b = v[1], c = v[2], d = v[3], e = v[4], f = v[5];
+  do {
+    C(a,b)
+  } while (0);
+  do {
+    C(b,c)
+      C(a,b)
+  } while (0);
+  do {
+    C(c,d)
+      C(b,c)
+      C(a,b)
+  } while (0);
+  do {
+    C(d,e)
+      C(c,d)
+      C(b,c)
+      C(a,b)
+  } while (0);
+  do {
+    C(e,f)
+      C(d,e)
+      C(c,d)
+      C(b,c)
+      C(a,b)
+  } while (0);
+  v[0]=a;v[1]=b;v[2]=c;v[3]=d;v[4]=e;v[5]=f;
+#undef C
+}
+
 static inline void sort6_insertion_sort_unrolled(int *d){
     int j1;
     int tmp1 = d[1];
@@ -346,7 +379,7 @@ static inline void sort6_insertion_sort_unrolled_v2(int * d){
 
 // to be debugged
 static inline void sort6_shellsort(int * d) {
-    char j, i, inc;
+    int j, i, inc;
     int tmp;
     for (inc = 4; inc > 0; inc -= 3) {
         for (i = inc; i < 5; i++) {
@@ -417,80 +450,35 @@ static inline void sort6_fast_network_simplified(int * d) {
 #undef max
 }
 
-static inline void sort6_net_6(int * u) {
-#define S(a,b,c,d,e,f) u[0] = a; u[1] = b; u[2] = c; u[3] = d; u[4] = e; u[5] = f;
-#define Scd11(a,b,c,d,e,f) if (c<d) { S(a,b,c,d,e,f) } else { S(a,b,d,c,e,f) }
-#define Sde10(a,b,c,d,e,f) if (d<e) { Scd11(a,b,c,d,e,f) } else { Scd11(a,b,c,e,d,f) }
-#define Sbc9(a,b,c,d,e,f) if (b<c) { Sde10(a,b,c,d,e,f) } else { Sde10(a,c,b,d,e,f) }
-#define Sef8(a,b,c,d,e,f) if (e<f) { Sbc9(a,b,c,d,e,f) } else { Sbc9(a,b,c,d,f,e) }
-#define Scd7(a,b,c,d,e,f) if (c<d) { Sef8(a,b,c,d,e,f) } else { Sef8(a,b,d,c,e,f) }
-#define Sab6(a,b,c,d,e,f) if (a<b) { Scd7(a,b,c,d,e,f) } else { Scd7(b,a,c,d,e,f) }
-#define Sdf5(a,b,c,d,e,f) if (d<f) { Sab6(a,b,c,d,e,f) } else { Sab6(a,b,c,f,e,d) }
-#define Sbe4(a,b,c,d,e,f) if (b<e) { Sdf5(a,b,c,d,e,f) } else { Sdf5(a,e,c,d,b,f) }
-#define Sac3(a,b,c,d,e,f) if (a<c) { Sbe4(a,b,c,d,e,f) } else { Sbe4(c,b,a,d,e,f) }
-#define Sef2(a,b,c,d,e,f) if (e<f) { Sac3(a,b,c,d,e,f) } else { Sac3(a,b,c,d,f,e) }
-#define Scd1(a,b,c,d,e,f) if (c<d) { Sef2(a,b,c,d,e,f) } else { Sef2(a,b,d,c,e,f) }
-#define Sab0(a,b,c,d,e,f) if (a<b) { Scd1(a,b,c,d,e,f) } else { Scd1(b,a,c,d,e,f) }
-  const int x=u[0],y=u[1],z=u[2],w=u[3],v=u[4],t=u[5];
-  Sab0(x,y,z,w,v,t)
-#undef Sab0
-#undef Scd1
-#undef Sef2
-#undef Sac3
-#undef Sbe4
-#undef Sdf5
-#undef Sab6
-#undef Scd7
-#undef Sef8
-#undef Sbc9
-#undef Sde10
-#undef Scd11
-#undef S
+static inline void sort6_net_6(int * v) {
+  typedef int V;
+V o0_0=v[0];V o1_0=v[1];V o2_0=v[2];V o3_0=v[3];V o4_0=v[4];V o5_0=v[5];
+V o1_1=o1_0<o2_0?o1_0:o2_0;
+V o2_1=o1_0<o2_0?o2_0:o1_0;
+V o4_2=o4_0<o5_0?o4_0:o5_0;
+V o5_2=o4_0<o5_0?o5_0:o4_0;
+V o0_3=o0_0<o2_1?o0_0:o2_1;
+V o2_3=o0_0<o2_1?o2_1:o0_0;
+V o3_4=o3_0<o5_2?o3_0:o5_2;
+V o5_4=o3_0<o5_2?o5_2:o3_0;
+V o0_5=o0_3<o1_1?o0_3:o1_1;
+V o1_5=o0_3<o1_1?o1_1:o0_3;
+V o3_6=o3_4<o4_2?o3_4:o4_2;
+V o4_6=o3_4<o4_2?o4_2:o3_4;
+V o2_7=o2_3<o5_4?o2_3:o5_4;
+V o5_7=o2_3<o5_4?o5_4:o2_3;
+V o0_8=o0_5<o3_6?o0_5:o3_6;
+V o3_8=o0_5<o3_6?o3_6:o0_5;
+V o1_9=o1_5<o4_6?o1_5:o4_6;
+V o4_9=o1_5<o4_6?o4_6:o1_5;
+V o2_10=o2_7<o4_9?o2_7:o4_9;
+V o4_10=o2_7<o4_9?o4_9:o2_7;
+V o1_11=o1_9<o3_8?o1_9:o3_8;
+V o3_11=o1_9<o3_8?o3_8:o1_9;
+V o2_12=o2_10<o3_11?o2_10:o3_11;
+V o3_12=o2_10<o3_11?o3_11:o2_10;
+v[0]=o0_8;v[1]=o1_11;v[2]=o2_12;v[3]=o3_12;v[4]=o4_10;v[5]=o5_7;
 }
-void net_3(int * u) {
-  //assert(a.size() == 3);
-  //assert(v.size() == 3);
-#define S(a,b,c) u[0] = a; u[1] = b; u[2] = c;
-#define Sbc(a,b,c) if (b<c) { S(a,b,c) } else { S(a,c,b) }
-#define Sac(a,b,c) if (a<c) { Sbc(a,b,c) } else { Sbc(c,b,a) }
-#define Sab(a,b,c) if (a<b) { Sac(a,b,c) } else { Sac(b,a,c) }
-  int x=u[0],y=u[1],z=u[2];
-  Sab(x,y,z)
-#undef S
-#undef Sbc
-#undef Sac
-#undef Sab
-}
-
-void sort6_mer_6(int * u) {
-  net_3(u);
-  net_3(u+3);
-#define S(a,b,c,d,e,f) u[0] = a; u[1] = b; u[2] = c; u[3] = d; u[4] = e; u[5] = f;
-
-#define deab_cf(a,b,c,d,e,f) if (c<f) { S(d,e,a,b,c,f) } else { S(d,e,a,b,f,c) }
-#define dea_bf(a,b,c,d,e,f) if (b<f) { deab_cf(a,b,c,d,e,f) } else { S(d,e,a,f,b,c) }
-#define de_af(a,b,c,d,e,f) if (a<f) { dea_bf(a,b,c,d,e,f) } else { S(d,e,f,a,b,c) }
-#define daeb_cf(a,b,c,d,e,f) if (c<f) { S(d,a,e,b,c,f) } else { S(d,a,e,b,f,c) }
-#define dae_bf(a,b,c,d,e,f) if (b<f) { daeb_cf(a,b,c,d,e,f) } else { S(d,a,e,f,b,c) }
-#define dabe_cf(a,b,c,d,e,f) if (c<f) { S(d,a,b,e,c,f) } else { S(d,a,b,e,f,c) }
-#define dab_ce(a,b,c,d,e,f) if (c<e) { S(d,a,b,c,e,f) } else { dabe_cf(a,b,c,d,e,f) }
-#define da_be(a,b,c,d,e,f) if (b<e) { dab_ce(a,b,c,d,e,f) } else { dae_bf(a,b,c,d,e,f) }
-#define d_ae(a,b,c,d,e,f) if (a<e) { da_be(a,b,c,d,e,f) } else { de_af(a,b,c,d,e,f) }
-
-#define adeb_cf(a,b,c,d,e,f) if (c<f) { S(a,d,e,b,c,f) } else { S(a,d,e,b,f,c) }
-#define ade_bf(a,b,c,d,e,f) if (b<f) { adeb_cf(a,b,c,d,e,f) } else { S(a,d,e,f,b,c) }
-#define adbe_cf(a,b,c,d,e,f) if (c<f) { S(a,d,b,e,c,f) } else { S(a,d,b,e,f,c) }
-#define adb_ce(a,b,c,d,e,f) if (c<e) { S(a,d,b,c,e,f) } else { adbe_cf(a,b,c,d,e,f) }
-#define ad_be(a,b,c,d,e,f) if (b<e) { adb_ce(a,b,c,d,e,f) } else { ade_bf(a,b,c,d,e,f) }
-#define abde_cf(a,b,c,d,e,f) if (c<f) { S(a,b,d,e,c,f) } else { S(a,b,d,e,f,c) }
-#define abd_ce(a,b,c,d,e,f) if (c<e) { S(a,b,d,c,e,f) } else { abde_cf(a,b,c,d,e,f) }
-#define ab_cd(a,b,c,d,e,f) if (c<d) { S(a,b,c,d,e,f) } else { abd_ce(a,b,c,d,e,f) }
-#define a_bd(a,b,c,d,e,f) if (b<d) { ab_cd(a,b,c,d,e,f) } else { ad_be(a,b,c,d,e,f) }
-#define ad(a,b,c,d,e,f) if (a<d) { a_bd(a,b,c,d,e,f) } else { d_ae(a,b,c,d,e,f) }
-  int64_t x=u[0],y=u[1],z=u[2],w=u[3],q=u[4],t=u[5];
-  ad(x,y,z,w,q,t)
-}
- 
 
 static inline unsigned long long rdtsc(void)
 {
@@ -587,7 +575,7 @@ TEST(fast_network_simplified, "Reordered Sorting Network w/ fast swap V2 ");
 TEST(inlined_bubble,          "Inlined Bubble Sort (Paolo Bonzini)       ");
 TEST(insertion_sort_unrolled_v2, "Unrolled Insertion Sort (Paolo Bonzini)   ");
 TEST(net_6, "Unrolled sort network");
-TEST(mer_6, "unrolled merge");
+TEST(insert_var, "Insert Sort in Vars");
  
 return 0;
  
